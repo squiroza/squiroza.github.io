@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>ONGUARDIAS Y ESTRATEGIAS SA DE CV</title>
+  <style>
+    body {
+      background-image: url('bg.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      height: 100vh;
+      margin: 0;
+    }
+  </style>
+</head>
+<body> 
+  <img src="LogoOng.jpg" alt="Logo" style="display: block; margin: 0 auto; width: 200px; height: auto; padding-top: 20px; padding-bottom: 20px;"> 
+  <center><h1 style="color: white;">ONGUARDIAS Y ESTRATEGIAS</h1></center>
+  <p align="center" style="color: white;">NO CERRAR ESTA PÁGINA</p>
+  <center><p style="color: white;" id="status">Esperando incidencias...</p></center>
+
+  <audio id="alertSound" src="Alerta.mp3" preload="auto" muted></audio>
+
+  <script>
+    const urlCSV = 'https://docs.google.com/spreadsheets/d/1aYW5ig0fMDIIe8umSsTXJp6OPD6xpGVvh5vK31M1aAc/export?format=csv&gid=0';
+    let ultimaFilaLeida = 0;
+    const audio = document.getElementById('alertSound');
+
+    async function fetchData() {
+      try {
+        const response = await fetch(urlCSV);
+        const data = await response.text();
+        procesarDatos(data);
+      } catch (error) {
+        console.error('Error al obtener datos:', error);
+      }
+    }
+
+    function procesarDatos(csvText) {
+      const filas = csvText.trim().split('\n');
+      if (filas.length <= ultimaFilaLeida) return;
+
+      for (let i = ultimaFilaLeida + 1; i < filas.length; i++) {
+        const columnas = filas[i].split(',');
+        const incidencia = columnas[7]; // Asegúrate de que sea el índice correcto
+
+        if (incidencia === 'Con Novedad' || incidencia === 'Llamada CMO') {
+          document.getElementById('status').textContent = `Nueva incidencia detectada: ${incidencia}`;
+          audio.muted = false;
+          audio.play().catch(error => {
+            console.error('No se pudo reproducir el sonido:', error);
+          });
+        }
+      }
+
+      ultimaFilaLeida = filas.length - 1;
+    }
+
+    // Revisa cada 1 segundos
+    setInterval(fetchData, 1000);
+    fetchData(); // Primera carga
+  </script>
+</body>
+</html>
